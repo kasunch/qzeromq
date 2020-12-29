@@ -35,5 +35,7 @@ find_package(Qt5 COMPONENTS Core REQUIRED)
 find_package(ZeroMQ REQUIRED)
 find_package(Threads REQUIRED)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_subdirectory(src)
-add_subdirectory(examples)
+#add_subdirectory(examples)

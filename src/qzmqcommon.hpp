@@ -51,4 +51,14 @@
 #define QZMQ_LOCAL
 #endif // QZMQ_DLL
 
+#ifdef QZMQ_NAMESPACE
+#define QZMQ_BEGIN_NAMESPACE    namespace QZMQ_NAMESPACE {
+#define QZMQ_END_NAMESPACE      }
+#else
+#define QZMQ_BEGIN_NAMESPACE
+#define QZMQ_END_NAMESPACE
+#endif
+
+#include <cstddef>
+
 #endif // __QZMQ_COMMON_H__

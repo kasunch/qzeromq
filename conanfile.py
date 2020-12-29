@@ -10,12 +10,9 @@ class LibQZmqConan(ConanFile):
     license = "Apache-2.0"  # SPDX Identifiers https://spdx.org/licenses/
     exports_sources = ["src/*", "qzmqConfig.cmake.in", "CMakeLists.txt"]
     settings = "os", "compiler", "build_type", "arch"
-    options = {
-        "shared": [True, False],
-    }
-    default_options = {
-        "shared": False,
-    }
+    generators = "cmake", "cmake_find_package"
+    options = {"shared": [True, False]}
+    default_options = {"shared": False}
 
     _git_is_dirty = False
     _git_commit = "unknown"

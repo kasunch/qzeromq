@@ -1,18 +1,19 @@
 set (QZMQ_PUBLIC_HEADERS
+    qzmq.hpp
     qzmqcommon.hpp
-#    qzmqexception.hpp
-#    qzmqcontext.hpp
-#    qzmqmessage.hpp
-#    qzmqsocket.hpp
-#    qzmq.hpp
+    qzmqerror.hpp
+    qzmqcontext.hpp
+    qzmqmessage.hpp
+    qzmqsocket.hpp
+    qzmqeventloophook.hpp
 )
 
 set (QZMQ_SOURCES
-#    qzmqexception.cpp
-#    qzmqcontext.cpp
-#    qzmqmessage.cpp
-#    qzmqsocket.cpp
-#    qzmqeventloophook.cpp
+    qzmqerror.cpp
+    qzmqcontext.cpp
+    qzmqmessage.cpp
+    qzmqsocket.cpp
+    qzmqeventloophook.cpp
 )
 
 list(APPEND target_outputs "")
@@ -34,7 +35,7 @@ if(BUILD_SHARED)
 endif()
 
 if(BUILD_STATIC)
-    add_library(libqzmq-static STATIC ${QTZMQ_SOURCES})
+    add_library(libqzmq-static STATIC ${QZMQ_SOURCES})
     list(APPEND target_outputs "libqzmq-static")
 endif()
 
@@ -54,6 +55,13 @@ foreach(target ${target_outputs})
             ${Qt5Core_INCLUDE_DIRS}
             ${ZeroMQ_INCLUDE_DIR}
     )
+
+    target_compile_definitions(${target}
+        PRIVATE $<$<COMPILE_LANGUAGE:CXX>:SOURCE_VERSION="${SOURCE_VERSION}">
+        PRIVATE $<$<COMPILE_LANGUAGE:CXX>:SOURCE_COMMIT="${SOURCE_COMMIT}">
+        PRIVATE $<$<COMPILE_LANGUAGE:CXX>:SOURCE_DIRTY="${SOURCE_DIRTY}">
+    )
+
 endforeach()
 
 include(GNUInstallDirs)
@@ -103,12 +111,12 @@ if(BUILD_SHARED OR BUILD_STATIC)
     # in other proejcts outside the build tree.
     install(FILES 
             ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-            DESTINATION ${QTZMQ_CMAKECONFIG_INSTALL_DIR}
+            DESTINATION ${QZMQ_CMAKECONFIG_INSTALL_DIR}
     )
     install(EXPORT 
         ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}Targets.cmake
-        DESTINATION ${QTZMQ_CMAKECONFIG_INSTALL_DIR}
+        DESTINATION ${QZMQ_CMAKECONFIG_INSTALL_DIR}
     )
 
 endif()
