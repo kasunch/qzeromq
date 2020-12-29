@@ -1,0 +1,32 @@
+# qzmq cmake module
+#
+# The following import targets are created
+#
+# ::
+#
+#   libqzmq-static
+#   libqzmq
+#
+# This module sets the following variables in your project::
+#
+#   qzmq_FOUND - true if qzmq found on the system
+#   qzmq_INCLUDE_DIR - The directory containing the headers
+#   qzmq_LIBRARY - The qzmq library for dynamic linking
+#   qzmq_STATIC_LIBRARY - The qzmq library for static linking
+
+@PACKAGE_INIT@
+
+find_package(ZeroMQ REQUIRED)
+find_package(Qt5 QUIET COMPONENTS Core REQUIRED)
+
+if(NOT TARGET libqzmq AND NOT TARGET libqzmq-static)
+    include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+
+    if (TARGET libqzmq)
+        get_target_property(@PROJECT_NAME@_INCLUDE_DIR libqzmq INTERFACE_INCLUDE_DIRECTORIES)
+        get_target_property(@PROJECT_NAME@_LIBRARY libqzmq LOCATION)
+    endif()
+    if (TARGET libqzmq-static)
+        get_target_property(@PROJECT_NAME@_STATIC_LIBRARY libqzmq-static LOCATION)
+    endif()
+endif()
