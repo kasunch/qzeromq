@@ -1,0 +1,8 @@
+# Folders
+build
+package
+.vscode
+.clangd
+
+# Files
+compile_commands.json
