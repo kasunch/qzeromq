@@ -5,7 +5,6 @@ set (QZMQ_PUBLIC_HEADERS
     qzmqcontext.hpp
     qzmqmessage.hpp
     qzmqsocket.hpp
-    qzmqeventloophook.hpp
 )
 
 set (QZMQ_SOURCES
@@ -24,13 +23,13 @@ if(BUILD_SHARED)
     # We are building a shared library
     set_target_properties(libqzmq 
         PROPERTIES
-        COMPILE_DEFINITIONS "QZMQ_DLL;QZMQ_DLL_EXPORTS"
+            COMPILE_DEFINITIONS "QZMQ_DLL;QZMQ_DLL_EXPORTS"
     )
     target_link_libraries(libqzmq PRIVATE Qt5::Core)
     if(ZMQ_SHARED)
-        target_link_libraries(libqzmq PRIVATE ${ZeroMQ_LIBRARY})
+        target_link_libraries(libqzmq PRIVATE ${libzmq_shared})
     else()
-        target_link_libraries(libqzmq PRIVATE ${ZeroMQ_STATIC_LIBRARY})
+        target_link_libraries(libqzmq PRIVATE ${libzmq_static})
     endif()
 endif()
 
@@ -41,17 +40,17 @@ endif()
 
 # Set common properties for all targets
 foreach(target ${target_outputs})
-    set_target_properties(${target} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     set_target_properties(${target}
         PROPERTIES
             AUTOMOC TRUE
             PUBLIC_HEADER "${QZMQ_PUBLIC_HEADERS}"
             OUTPUT_NAME "qzmq"
             PREFIX "lib"
+            POSITION_INDEPENDENT_CODE ON
     )
 
     target_include_directories(${target}
-        PUBLIC
+        PRIVATE
             ${Qt5Core_INCLUDE_DIRS}
             ${ZeroMQ_INCLUDE_DIR}
     )
@@ -61,18 +60,18 @@ foreach(target ${target_outputs})
         PRIVATE $<$<COMPILE_LANGUAGE:CXX>:SOURCE_COMMIT="${SOURCE_COMMIT}">
         PRIVATE $<$<COMPILE_LANGUAGE:CXX>:SOURCE_DIRTY="${SOURCE_DIRTY}">
     )
-
 endforeach()
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 if(BUILD_SHARED OR BUILD_STATIC)
+    set(cmake_package_name "QZeroMQ")
     # Install compiled binaries and header files in the installation directory.
     # Also export targets which are used with export() in a later step.
     # Moreover, specify the directories to be added to the list of include interface
     install(TARGETS ${target_outputs}
-        EXPORT ${PROJECT_NAME}-targets
+        EXPORT ${cmake_package_name}-targets
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -84,39 +83,38 @@ if(BUILD_SHARED OR BUILD_STATIC)
     if(WIN32)
         set(QZMQ_CMAKECONFIG_INSTALL_DIR "CMake" 
             CACHE 
-            STRING "install path for qzmqConfig.cmake"
+            STRING "install path for QZeroMQConfig.cmake"
         )
     else()
         # GNUInstallDirs "DATADIR" wrong here; CMake search path wants "share".
-        set(QZMQ_CMAKECONFIG_INSTALL_DIR "share/cmake/${PROJECT_NAME}" 
+        set(QZMQ_CMAKECONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${cmake_package_name}" 
             CACHE 
-            STRING "install path for qzmqConfig.cmake"
+            STRING "install path for QZeroMQConfig.cmake"
         )
     endif()
 
     # Create a *Config.cmake file using the given template in the current binary directory
     # This file will be installed in a later step.
-    configure_package_config_file(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in 
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+    configure_package_config_file(${CMAKE_SOURCE_DIR}/${cmake_package_name}Config.cmake.in 
+        ${CMAKE_CURRENT_BINARY_DIR}/${cmake_package_name}Config.cmake
         INSTALL_DESTINATION ${QZMQ_CMAKECONFIG_INSTALL_DIR}
     )
 
     # Export the targets from the build tree to local *Targets.cmake file
     # So the other projects in the current build tree can use the exported targets.
-    export(EXPORT ${PROJECT_NAME}-targets
-        FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake
+    export(EXPORT ${cmake_package_name}-targets
+        FILE ${CMAKE_CURRENT_BINARY_DIR}/${cmake_package_name}Targets.cmake
     )
 
     # Install *Config.cmake and *Targets.cmake files which can be found by find_package()
     # in other proejcts outside the build tree.
     install(FILES 
-            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+            ${CMAKE_CURRENT_BINARY_DIR}/${cmake_package_name}Config.cmake
             DESTINATION ${QZMQ_CMAKECONFIG_INSTALL_DIR}
     )
     install(EXPORT 
-        ${PROJECT_NAME}-targets
-        FILE ${PROJECT_NAME}Targets.cmake
+        ${cmake_package_name}-targets
+        FILE ${cmake_package_name}Targets.cmake
         DESTINATION ${QZMQ_CMAKECONFIG_INSTALL_DIR}
     )
-
 endif()

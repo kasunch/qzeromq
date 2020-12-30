@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "qzmqmessage.hpp"
+#include <zmq.h>
 
 QZMQ_BEGIN_NAMESPACE
 

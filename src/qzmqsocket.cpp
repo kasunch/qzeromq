@@ -82,7 +82,7 @@ QZmqSocket* QZmqSocket::create(int type, QObject* parent)
 
 void QZmqSocket::readActivated(int socket)
 {
-    //receiveAll();
+    receiveAll();
 }
 
 void QZmqSocket::writeActivated(int socket)
@@ -180,7 +180,7 @@ void QZmqSocket::receiveAll()
 {
     this->readNotifier->setEnabled(false);
     while (events() & ZMQ_POLLIN) {
-        QZmqMessage *msg = new QZmqMessage();
+        QZmqMessage *msg = QZmqMessage::create(this);
         if (receive(msg)) {
             static const QMetaMethod signal = QMetaMethod::fromSignal(&QZmqSocket::onMessage);
             if (QObject::isSignalConnected(signal)) {
@@ -189,6 +189,7 @@ void QZmqSocket::receiveAll()
                 delete msg; 
             }
         } else {
+            emit onError(this, QZmqError::getLastError());
             delete msg;
         }
     }

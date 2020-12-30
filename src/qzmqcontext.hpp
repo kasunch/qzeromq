@@ -16,11 +16,11 @@
 #define __QZMQ_CONTEXT_H__
 
 #include "qzmqcommon.hpp"
-#include <zmq.h>
 #include <QObject>
 
 QZMQ_BEGIN_NAMESPACE
-//class QZmqSocket;
+
+class QObject;
 class QZMQ_API QZmqContext : public QObject
 {
 public:
@@ -28,10 +28,10 @@ public:
     bool getOption(int option, int &value);
     static QZmqContext* instance();
 
-private:
+protected:
     friend class QZmqSocket;
     QZmqContext();
-    ~QZmqContext();
+    virtual ~QZmqContext();
     Q_DISABLE_COPY(QZmqContext);
     void *context; 
 };

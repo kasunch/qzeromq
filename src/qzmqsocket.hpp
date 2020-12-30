@@ -21,8 +21,8 @@
 
 QZMQ_BEGIN_NAMESPACE
 
-class QZmqMessage;
 class QSocketNotifier;
+class QZmqMessage;
 class QZMQ_API QZmqSocket : public QObject
 {
     Q_OBJECT
@@ -42,8 +42,9 @@ public:
 signals:
     void onMessage(QZmqSocket *socket, QZmqMessage *msg);
     void onReadyToSend(QZmqSocket *socket);
+    void onError(QZmqSocket *socket, int error);
 
-private slots:
+protected slots:
     void readActivated(int socket);
     void writeActivated(int socket);
 

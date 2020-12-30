@@ -15,8 +15,10 @@
 #ifndef __QZMQ_H__
 #define __QZMQ_H__
 
+#include "qzmqcommon.hpp"
+#include "qzmqerror.hpp"
 #include "qzmqcontext.hpp"
 #include "qzmqmessage.hpp"
-//#include "qzmqsocket.hpp"
+#include "qzmqsocket.hpp"
 
 #endif // __QT_ZMQ_H__

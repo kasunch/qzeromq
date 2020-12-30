@@ -22,6 +22,8 @@
 
 QZMQ_BEGIN_NAMESPACE
 
+QThreadStorage <QZmqEventLoopHook*> QZmqEventLoopHook::localInstance;
+
 QZmqEventLoopHook::QZmqEventLoopHook(QObject *parent) : QObject(parent)
 {
 
@@ -39,7 +41,8 @@ QZmqEventLoopHook* QZmqEventLoopHook::instance()
         // The destructor will be called when the QApplication is destroyed
         // Refer QThreadStorage documentation for more details.
         QZmqEventLoopHook *hook = new QZmqEventLoopHook();
-        auto dispatcher = QAbstractEventDispatcher::instance(NULL);
+        // Get current disptacher of the current thread.
+        auto dispatcher = QAbstractEventDispatcher::instance(nullptr); 
         Q_ASSERT(dispatcher != NULL);
         QObject::connect(dispatcher, &QAbstractEventDispatcher::aboutToBlock, hook, &QZmqEventLoopHook::onAboutToBlock);
         QObject::connect(dispatcher, &QAbstractEventDispatcher::awake, hook, &QZmqEventLoopHook::onAwake);
@@ -63,11 +66,11 @@ void QZmqEventLoopHook::attach(QZmqSocket *socket)
 void QZmqEventLoopHook::detach(QZmqSocket *socket)
 {
     Q_ASSERT(socket != NULL);
+    
     int index = this->sockets.indexOf(socket);
     if (index < 0) {
         return;
     }
-
     this->pollItems.remove(index);
     this->sockets.remove(index);
 }

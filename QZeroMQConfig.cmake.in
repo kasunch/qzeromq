@@ -20,7 +20,7 @@ find_package(ZeroMQ REQUIRED)
 find_package(Qt5 QUIET COMPONENTS Core REQUIRED)
 
 if(NOT TARGET libqzmq AND NOT TARGET libqzmq-static)
-    include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/@cmake_package_name@Targets.cmake")
 
     if (TARGET libqzmq)
         get_target_property(@PROJECT_NAME@_INCLUDE_DIR libqzmq INTERFACE_INCLUDE_DIRECTORIES)

@@ -16,11 +16,11 @@
 #define __QZMQ_MESSAGE_H__
 
 #include "qzmqcommon.hpp"
-#include <zmq.h>
 #include <QObject>
 
 QZMQ_BEGIN_NAMESPACE
 
+class zmq_msg_t;
 class QZMQ_API QZmqMessage : public QObject
 {
 public:

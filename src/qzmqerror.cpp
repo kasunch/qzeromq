@@ -4,7 +4,7 @@
 
 QZMQ_BEGIN_NAMESPACE
 
-QZmqError::QZmqError()
+QZmqError::QZmqError() : QObject(nullptr)
 {
 
 }

@@ -26,9 +26,9 @@ public:
     static int getLastError();
     static const char* getLastError(int error);
 
-private:
+protected:
     QZmqError();
-    ~QZmqError();
+    virtual ~QZmqError();
     Q_DISABLE_COPY(QZmqError);
 };
 

@@ -34,7 +34,7 @@ public:
     void attach(QZmqSocket *socket);
     void detach(QZmqSocket *socket);
 
-private slots:
+protected slots:
     void onAboutToBlock();
     void onAwake();
     void onTimer();

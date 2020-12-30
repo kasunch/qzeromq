@@ -17,7 +17,7 @@
 
 QZMQ_BEGIN_NAMESPACE
 
-QZmqContext::QZmqContext()
+QZmqContext::QZmqContext() : QObject(nullptr)
 {
     this->context = zmq_ctx_new();
     Q_ASSERT(this->context != NULL);
