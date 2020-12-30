@@ -12,7 +12,6 @@ set (QZMQ_SOURCES
     qzmqcontext.cpp
     qzmqmessage.cpp
     qzmqsocket.cpp
-    qzmqeventloophook.cpp
 )
 
 list(APPEND target_outputs "")

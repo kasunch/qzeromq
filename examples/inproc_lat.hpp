@@ -15,8 +15,6 @@
 #ifndef __INPROC_LAT_H__
 #define __INPROC_LAT_H__
 
-#include <cstdint>
-#include <QTimer>
 #include <QCoreApplication>
 #include <QThread>
 
@@ -58,9 +56,9 @@ private:
     QZmqSocket* socket;
     QZmqMessage* msgQueued;
     WorkerThread* worker;
-    uint32_t msg_cnt;
-    uint32_t msg_size;
-    uint32_t max_msgs;
+    int msg_cnt;
+    int msg_size;
+    int max_msgs;
     bool dontExit;
     void* watch;
 };

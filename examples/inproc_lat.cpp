@@ -15,8 +15,8 @@
 #include "inproc_lat.hpp"
 #include <qzmq.hpp>
 #include <zmq.h>
-#include <cstdint>
 #include <cstdio>
+#include <QTimer>
 #include <QDebug>
 #include <QDateTime>
 #include <QCommandLineParser>
@@ -39,18 +39,18 @@ InProcLatApp::InProcLatApp(int &argc, char **argv) : QCoreApplication(argc, argv
         return;
     }
 
-    msg_cnt = 0;
-    msg_size = args[0].toInt();
-    max_msgs = args[1].toInt();
-    dontExit = parser.isSet(dontExitOpt) ? true : false;
+    this->msg_cnt = 0;
+    this->msg_size = args[0].toInt();
+    this->max_msgs = args[1].toInt();
+    this->dontExit = parser.isSet(dontExitOpt) ? true : false;
 
-    socket = QZmqSocket::create(ZMQ_REQ);
-    Q_ASSERT(socket != NULL);
-    connect(socket, &QZmqSocket::onMessage, this, &InProcLatApp::onMessage);
-    connect(socket, &QZmqSocket::onReadyToSend, this, &InProcLatApp::onReadyToSend);
-    connect(socket, &QZmqSocket::onError, this, &InProcLatApp::onError);
+    this->socket = QZmqSocket::create(ZMQ_REQ);
+    Q_ASSERT(this->socket != NULL);
+    connect(this->socket, &QZmqSocket::onMessage, this, &InProcLatApp::onMessage);
+    connect(this->socket, &QZmqSocket::onReadyToSend, this, &InProcLatApp::onReadyToSend);
+    connect(this->socket, &QZmqSocket::onError, this, &InProcLatApp::onError);
 
-    if (!socket->bind("inproc://lat_test")) {
+    if (!this->socket->bind("inproc://lat_test")) {
         int error = QZmqError::getLastError();
         const char *errStr = QZmqError::getLastError(error);
         qCritical() << "Binding failed:" << error << "-" << errStr;
@@ -58,48 +58,50 @@ InProcLatApp::InProcLatApp(int &argc, char **argv) : QCoreApplication(argc, argv
         return;
     }
 
-    msgQueued = NULL;
-    worker = new WorkerThread(msg_size,this);
-    worker->start();
+    this->msgQueued = NULL;
+    this->worker = new WorkerThread(this->msg_size, this);
+    this->worker->start();
     QTimer::singleShot(0, this, &InProcLatApp::started); 
 }
 
 InProcLatApp::~InProcLatApp()
 {
-    if (worker != NULL) {
-        delete worker;
+    if (this->worker != NULL) {
+        delete this->worker;
+        this->worker = NULL;
     }
 
-    if (socket != NULL) {
-        delete socket;
+    if (this->socket != NULL) {
+        delete this->socket;
+        this->socket = NULL;
     }
 }
 
 void InProcLatApp::onMessage(QZmqSocket *socket, QZmqMessage *msg)
 {
-    if (msg_cnt < max_msgs) {
-        if (msg->size() != msg_size) {
+    if (this->msg_cnt < this->max_msgs) {
+        if (msg->size() != this->msg_size) {
             qCritical() << "Message of incorrect size received";
-            worker->quit();
-            worker->wait();
+            this->worker->quit();
+            this->worker->wait();
             InProcLatApp::exit(-1);
             return;
         }
 
-        if (!socket->send(msg)) {
+        if (!this->socket->send(msg)) {
             int error = QZmqError::getLastError();
             const char *errStr = QZmqError::getLastError(error);
-            qWarning() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
+            qCritical() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
         }
-        msg_cnt++;
+        this->msg_cnt++;
     } else {
-        uint64_t elapsed = zmq_stopwatch_stop(watch);
+        uint64_t elapsed = zmq_stopwatch_stop(this->watch);
         double latency = (double)elapsed / (msg_cnt * 2);
         qInfo() << "Sending stopped";
         qInfo() << "Average latency:" << latency << "us";
         delete msg;
-        worker->quit();
-        worker->wait();
+        this->worker->quit();
+        this->worker->wait();
         if (!dontExit) {
             InProcLatApp::quit();
         }
@@ -113,14 +115,13 @@ void InProcLatApp::onReadyToSend(QZmqSocket *socket)
             int error = QZmqError::getLastError();
             const char *errStr = QZmqError::getLastError(error);
             qCritical() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
-            worker->quit();
-            worker->wait();
+            this->worker->quit();
+            this->worker->wait();
             InProcLatApp::exit(-1);
             return;
         }
         this->msgQueued = NULL;
     }
-    qInfo() << "InProcLatApp:onReadyToSend";
 }
 
 void InProcLatApp::onError(QZmqSocket *socket, int error)
@@ -132,9 +133,11 @@ void InProcLatApp::onError(QZmqSocket *socket, int error)
 void InProcLatApp::started()
 {
     qInfo() << "Sending started";
-    watch = zmq_stopwatch_start();
-    QZmqMessage *msg = QZmqMessage::create(msg_size);
-    if (!socket->send(msg)) {
+    this->watch = zmq_stopwatch_start();
+    QZmqMessage *msg = QZmqMessage::create(this->msg_size);
+    if (!this->socket->send(msg)) {
+        // Client may not have connected yet. 
+        // Therefore, queue the massage now and send later when the socket is ready to send.
         this->msgQueued = msg;
     } 
 }
@@ -148,23 +151,24 @@ WorkerThread::WorkerThread(uint32_t msg_size, QObject *parent) : QThread(parent)
 
 WorkerThread::~WorkerThread()
 {
-    if (socket != NULL) {
-        delete socket;
+    if (this->socket != NULL) {
+        delete this->socket;
+        this->socket = NULL;
     }
 }
 
 void WorkerThread::onMessage(QZmqSocket *socket, QZmqMessage *msg)
 {
-    if (!socket->send(msg)) {
+    if (!this->socket->send(msg)) {
         int error = QZmqError::getLastError();
         const char *errStr = QZmqError::getLastError(error);
-        qWarning() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
+        qCritical() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
     } 
 }
 
 void WorkerThread::onReadyToSend(QZmqSocket *socket)
 {
-    qInfo() << "WorkerThread:onReadyToSend";
+
 }
 
 void WorkerThread::onError(QZmqSocket* socket, int error)
@@ -174,11 +178,16 @@ void WorkerThread::onError(QZmqSocket* socket, int error)
 
 void WorkerThread::started()
 {
-    socket = QZmqSocket::create(ZMQ_REP);
-    connect(socket, &QZmqSocket::onMessage, this, &WorkerThread::onMessage);
-    connect(socket, &QZmqSocket::onReadyToSend, this, &WorkerThread::onReadyToSend);
-    connect(socket, &QZmqSocket::onError, this, &WorkerThread::onError);
-    socket->connect("inproc://lat_test"); 
+    this->socket = QZmqSocket::create(ZMQ_REP);
+    connect(this->socket, &QZmqSocket::onMessage, this, &WorkerThread::onMessage);
+    connect(this->socket, &QZmqSocket::onReadyToSend, this, &WorkerThread::onReadyToSend);
+    connect(this->socket, &QZmqSocket::onError, this, &WorkerThread::onError);
+
+    if(!this->socket->connect("inproc://lat_test")) {
+        int error = QZmqError::getLastError();
+        const char *errStr = QZmqError::getLastError(error);
+        qCritical() << "Cannot connect:" << QZmqError::getLastError() << "-" << errStr;
+    } 
 }
 
 

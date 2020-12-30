@@ -15,24 +15,27 @@
 #include "qzmqsocket.hpp"
 #include "qzmqmessage.hpp"
 #include "qzmqcontext.hpp"
-#include "qzmqeventloophook.hpp"
 #include "qzmqerror.hpp"
 #include <QSocketNotifier>
 #include <QMetaMethod>
+#include <QAbstractEventDispatcher>
+#include <QTimer>
 
 QZMQ_BEGIN_NAMESPACE
+
+constexpr int DEFAULT_MAX_THROUGHPUT = 1000;
 
 QZmqSocket::QZmqSocket(QObject* parent) : QObject(parent)
 {
     this->socket = NULL;
     this->readNotifier = NULL;
     this->writeNotifier = NULL;
+    this->eventPending = false;
+    this->maxThroughput = DEFAULT_MAX_THROUGHPUT;
 }
 
 QZmqSocket::~QZmqSocket()
 {
-    QZmqEventLoopHook::instance()->detach(this);
-
     if (this->readNotifier != NULL) {
         this->readNotifier->setEnabled(false);
         delete this->readNotifier;
@@ -69,13 +72,19 @@ QZmqSocket* QZmqSocket::create(int type, QObject* parent)
 
     QZmqSocket* qsocket = new QZmqSocket(parent);
     qsocket->socket = socket;
+
     qsocket->readNotifier = new QSocketNotifier(fd, QSocketNotifier::Read, qsocket);
     QObject::connect(qsocket->readNotifier, &QSocketNotifier::activated, qsocket, &QZmqSocket::readActivated);
     qsocket->readNotifier->setEnabled(true);
+
     qsocket->writeNotifier = new QSocketNotifier(fd, QSocketNotifier::Write, qsocket);
     QObject::connect(qsocket->writeNotifier, &QSocketNotifier::activated, qsocket, &QZmqSocket::writeActivated);
     qsocket->writeNotifier->setEnabled(false);
-    QZmqEventLoopHook::instance()->attach(qsocket);
+
+    auto dispatcher = QAbstractEventDispatcher::instance(nullptr); 
+    Q_ASSERT(dispatcher != NULL);
+    QObject::connect(dispatcher, &QAbstractEventDispatcher::aboutToBlock, qsocket, &QZmqSocket::onAboutToBlock);
+    QObject::connect(dispatcher, &QAbstractEventDispatcher::awake, qsocket, &QZmqSocket::onAwake);
 
     return qsocket;
 }
@@ -88,6 +97,44 @@ void QZmqSocket::readActivated(int socket)
 void QZmqSocket::writeActivated(int socket)
 {
     checkReadyToSend();
+}
+
+void QZmqSocket::onAboutToBlock()
+{
+    this->eventPending = false;
+    int events = this->events();
+    if (events & ZMQ_POLLIN) {
+        this->eventPending = true;
+    }
+    if (this->writeNotifier->isEnabled()) {
+        if (events & ZMQ_POLLOUT) {
+            this->eventPending = true;
+        }
+    }
+
+    if (this->eventPending) {
+        // There is some activity on the socket.
+        // Schedule the a single-shot timer that wakes up the event loop.
+        QTimer::singleShot(0, this, &QZmqSocket::onWakeUpTimer);
+    } else {
+        // No activity on the socket.
+        // We have to rely on socket notifiers now.
+    }
+}
+
+void QZmqSocket::onAwake()
+{
+    if (this->eventPending) {
+        this->eventPending = false;
+        receiveAll();
+        checkReadyToSend();
+    }
+}
+
+void QZmqSocket::onWakeUpTimer()
+{
+    // Nothing to be done here.
+    // This is just a dummy handler for the event loop wake-up timer.
 }
 
 bool QZmqSocket::getOption(int option, void *value, size_t *len)
@@ -179,7 +226,8 @@ bool QZmqSocket::receive(QZmqMessage *msg, int flags)
 void QZmqSocket::receiveAll()
 {
     this->readNotifier->setEnabled(false);
-    while (events() & ZMQ_POLLIN) {
+    int i = 0;
+    while ((events() & ZMQ_POLLIN) && i < this->maxThroughput) {
         QZmqMessage *msg = QZmqMessage::create(this);
         if (receive(msg)) {
             static const QMetaMethod signal = QMetaMethod::fromSignal(&QZmqSocket::onMessage);
@@ -192,6 +240,7 @@ void QZmqSocket::receiveAll()
             emit onError(this, QZmqError::getLastError());
             delete msg;
         }
+        i++;
     }
     this->readNotifier->setEnabled(true);
 }
@@ -209,7 +258,11 @@ bool QZmqSocket::send(QZmqMessage *msg, int flags)
             this->writeNotifier->setEnabled(true);
         }
         return false;
-    } 
+    } else {
+        // For the moment, we can still send data over the socket.
+        // So, we do not need to worry about the ready-to-send event.
+        this->writeNotifier->setEnabled(false);
+    }
 
     delete msg;
     return true;
@@ -217,16 +270,16 @@ bool QZmqSocket::send(QZmqMessage *msg, int flags)
 
 void QZmqSocket::checkReadyToSend()
 {
-    if (events() & ZMQ_POLLOUT) {
-        this->writeNotifier->setEnabled(false);
-        emit onReadyToSend(this);
+    if (this->writeNotifier->isEnabled()) {
+        if (events() & ZMQ_POLLOUT) {
+            this->writeNotifier->setEnabled(false);
+            emit onReadyToSend(this);
+        }
     }
 }
 
 bool QZmqSocket::hasMoreParts()
-{
-    Q_ASSERT(this->socket != NULL);
-    
+{    
     int value = 0;
     size_t size = sizeof(value);
     getOption(ZMQ_RCVMORE, &value, &size);
@@ -236,6 +289,16 @@ bool QZmqSocket::hasMoreParts()
 void* QZmqSocket::zmqSocket()
 {
     return this->socket;
+}
+
+int QZmqSocket::maximumThroughput()
+{
+    return this->maxThroughput;
+}
+
+void QZmqSocket::setMaximumThroughput(int throughput)
+{
+    this->maxThroughput = throughput;
 }
 
 QZMQ_END_NAMESPACE

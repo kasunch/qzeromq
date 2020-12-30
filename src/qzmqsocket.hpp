@@ -38,6 +38,8 @@ public:
     bool send(QZmqMessage *msg, int flags=ZMQ_DONTWAIT);
     bool receive(QZmqMessage *msg, int flags=ZMQ_DONTWAIT);
     bool hasMoreParts();
+    int maximumThroughput();
+    void setMaximumThroughput(int throughput);
     void* zmqSocket();
 
 signals:
@@ -48,9 +50,11 @@ signals:
 protected slots:
     void readActivated(int socket);
     void writeActivated(int socket);
+    void onAboutToBlock();
+    void onAwake();
+    void onWakeUpTimer();
 
 protected:
-    friend class QZmqEventLoopHook;
     QZmqSocket(QObject* parent=nullptr);
     int events();
     void receiveAll();
@@ -59,6 +63,8 @@ protected:
     void *socket;
     QSocketNotifier *readNotifier;
     QSocketNotifier *writeNotifier;
+    bool eventPending;
+    int maxThroughput;
 };
 
 QZMQ_END_NAMESPACE
