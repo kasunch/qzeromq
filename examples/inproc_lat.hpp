@@ -32,6 +32,7 @@ public:
 
 private slots:
     void onMessage(QZmqSocket *socket, QZmqMessage *msg);
+    void onReadyToSend(QZmqSocket *socket);
     void onError(QZmqSocket *socket, int error);
     void started();
 
@@ -49,11 +50,13 @@ public:
 
 private slots:
     void onMessage(QZmqSocket *socket, QZmqMessage *msg);
+    void onReadyToSend(QZmqSocket *socket);
     void onError(QZmqSocket *socket, int error);
     void started();
 
 private:
     QZmqSocket* socket;
+    QZmqMessage* msgQueued;
     WorkerThread* worker;
     uint32_t msg_cnt;
     uint32_t msg_size;

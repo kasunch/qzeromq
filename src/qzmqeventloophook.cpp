@@ -110,7 +110,7 @@ void QZmqEventLoopHook::onAwake()
     if (this->eventPending) {
         for (auto it = this->sockets.begin(); it != this->sockets.end(); it++) {
             (*it)->receiveAll();
-            (*it)->checkReadyToSend();
+            //(*it)->checkReadyToSend();
         }
         this->eventPending = false;
     }

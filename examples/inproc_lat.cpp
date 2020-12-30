@@ -47,6 +47,7 @@ InProcLatApp::InProcLatApp(int &argc, char **argv) : QCoreApplication(argc, argv
     socket = QZmqSocket::create(ZMQ_REQ);
     Q_ASSERT(socket != NULL);
     connect(socket, &QZmqSocket::onMessage, this, &InProcLatApp::onMessage);
+    connect(socket, &QZmqSocket::onReadyToSend, this, &InProcLatApp::onReadyToSend);
     connect(socket, &QZmqSocket::onError, this, &InProcLatApp::onError);
 
     if (!socket->bind("inproc://lat_test")) {
@@ -57,9 +58,10 @@ InProcLatApp::InProcLatApp(int &argc, char **argv) : QCoreApplication(argc, argv
         return;
     }
 
+    msgQueued = NULL;
     worker = new WorkerThread(msg_size,this);
     worker->start();
-    QTimer::singleShot(10, this, &InProcLatApp::started); 
+    QTimer::singleShot(0, this, &InProcLatApp::started); 
 }
 
 InProcLatApp::~InProcLatApp()
@@ -104,6 +106,23 @@ void InProcLatApp::onMessage(QZmqSocket *socket, QZmqMessage *msg)
     }
 }
 
+void InProcLatApp::onReadyToSend(QZmqSocket *socket)
+{
+    if (this->msgQueued != NULL) {
+        if (!socket->send(this->msgQueued)) {
+            int error = QZmqError::getLastError();
+            const char *errStr = QZmqError::getLastError(error);
+            qCritical() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
+            worker->quit();
+            worker->wait();
+            InProcLatApp::exit(-1);
+            return;
+        }
+        this->msgQueued = NULL;
+    }
+    qInfo() << "InProcLatApp:onReadyToSend";
+}
+
 void InProcLatApp::onError(QZmqSocket *socket, int error)
 {
     qCritical() << "Socket error:" << QZmqError::getLastError(error);
@@ -112,13 +131,11 @@ void InProcLatApp::onError(QZmqSocket *socket, int error)
 
 void InProcLatApp::started()
 {
-    qInfo() << "Start sending";
+    qInfo() << "Sending started";
     watch = zmq_stopwatch_start();
     QZmqMessage *msg = QZmqMessage::create(msg_size);
     if (!socket->send(msg)) {
-        int error = QZmqError::getLastError();
-        const char *errStr = QZmqError::getLastError(error);
-        qWarning() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
+        this->msgQueued = msg;
     } 
 }
 
@@ -145,6 +162,11 @@ void WorkerThread::onMessage(QZmqSocket *socket, QZmqMessage *msg)
     } 
 }
 
+void WorkerThread::onReadyToSend(QZmqSocket *socket)
+{
+    qInfo() << "WorkerThread:onReadyToSend";
+}
+
 void WorkerThread::onError(QZmqSocket* socket, int error)
 {
     qCritical() << "Socket error:" << QZmqError::getLastError(error);
@@ -154,6 +176,7 @@ void WorkerThread::started()
 {
     socket = QZmqSocket::create(ZMQ_REP);
     connect(socket, &QZmqSocket::onMessage, this, &WorkerThread::onMessage);
+    connect(socket, &QZmqSocket::onReadyToSend, this, &WorkerThread::onReadyToSend);
     connect(socket, &QZmqSocket::onError, this, &WorkerThread::onError);
     socket->connect("inproc://lat_test"); 
 }
@@ -167,19 +190,19 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext& context, cons
     QString dateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd-hh:mm:ss.zzz");
     switch (type) {
         case QtDebugMsg:
-            fprintf(stdout, "%s|DEBUG| %s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
+            fprintf(stdout, "%s|DEBUG|%s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
             break;
         case QtInfoMsg:
-            fprintf(stdout, "%s|INFO | %s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
+            fprintf(stdout, "%s|INFO |%s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
             break;
         case QtWarningMsg:
-            fprintf(stderr, "%s|WARN | %s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
+            fprintf(stderr, "%s|WARN |%s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
             break;
         case QtCriticalMsg:
-            fprintf(stderr, "%s|CRTCL| %s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
+            fprintf(stderr, "%s|CRTCL|%s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
             break;
         case QtFatalMsg:
-            fprintf(stderr, "%s|FATAL| %s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
+            fprintf(stderr, "%s|FATAL|%s\n", dateTimeStr.toStdString().c_str(), msg.toStdString().c_str());
             break;
     }
 }

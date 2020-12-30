@@ -46,6 +46,11 @@ bool QZmqContext::getOption(int option, int &value)
     return value >= 0;
 }
 
+void* QZmqContext::zmqContext()
+{
+    return this->context;
+}
+
 QZmqContext* QZmqContext::instance()
 {
     // ZMQ documentation says:

@@ -36,11 +36,11 @@ public:
     const char* gets(const char *property);
     bool get(int property, int &value);
     bool set(int property, int value);
-    zmq_msg_t* msg();
+    zmq_msg_t* zmqMsg();
 protected:
     friend class QZmqSocket;
     QZmqMessage(QObject *parent=nullptr);
-    zmq_msg_t *zMsg;
+    zmq_msg_t *msg;
 };
 
 QZMQ_END_NAMESPACE

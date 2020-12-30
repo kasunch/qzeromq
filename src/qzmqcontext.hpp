@@ -26,6 +26,7 @@ class QZMQ_API QZmqContext : public QObject
 public:
     bool setOption(int option, int value);
     bool getOption(int option, int &value);
+    void* zmqContext();
     static QZmqContext* instance();
 
 protected:

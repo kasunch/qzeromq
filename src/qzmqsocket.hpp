@@ -38,6 +38,7 @@ public:
     bool send(QZmqMessage *msg, int flags=ZMQ_DONTWAIT);
     bool receive(QZmqMessage *msg, int flags=ZMQ_DONTWAIT);
     bool hasMoreParts();
+    void* zmqSocket();
 
 signals:
     void onMessage(QZmqSocket *socket, QZmqMessage *msg);

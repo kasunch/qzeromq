@@ -169,7 +169,7 @@ bool QZmqSocket::receive(QZmqMessage *msg, int flags)
     Q_ASSERT(msg != NULL);
     Q_ASSERT(this->socket != NULL);
 
-    int rc = zmq_msg_recv(msg->zMsg, this->socket, flags);
+    int rc = zmq_msg_recv(msg->msg, this->socket, flags);
     if (rc < 0) {
         return false;
     }
@@ -201,7 +201,7 @@ bool QZmqSocket::send(QZmqMessage *msg, int flags)
     Q_ASSERT(msg != NULL);
     Q_ASSERT(this->socket != NULL);
 
-    int rc = zmq_msg_send(msg->zMsg, this->socket, flags);
+    int rc = zmq_msg_send(msg->msg, this->socket, flags);
     if (rc < 0) {
         if (QZmqError::getLastError() == EAGAIN) {
             // Non-blocking mode was requested and the message cannot be sent at the moment.
@@ -218,10 +218,24 @@ bool QZmqSocket::send(QZmqMessage *msg, int flags)
 void QZmqSocket::checkReadyToSend()
 {
     if (events() & ZMQ_POLLOUT) {
-        // Ready to send messages.
         this->writeNotifier->setEnabled(false);
         emit onReadyToSend(this);
     }
+}
+
+bool QZmqSocket::hasMoreParts()
+{
+    Q_ASSERT(this->socket != NULL);
+    
+    int value = 0;
+    size_t size = sizeof(value);
+    getOption(ZMQ_RCVMORE, &value, &size);
+    return value == 1;
+}
+
+void* QZmqSocket::zmqSocket()
+{
+    return this->socket;
 }
 
 QZMQ_END_NAMESPACE

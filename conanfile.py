@@ -2,8 +2,8 @@ import re
 from conans import ConanFile, CMake, tools
 
 
-class LibQZmqConan(ConanFile):
-    name = "libqzmq"
+class QZeroMQConan(ConanFile):
+    name = "qzeromq"
     description = "Qt library for ZMQ"
     url = "https://github.com/kasunch/libqzmq"
     homepage = "https://github.com/kasunch/libqzmq"

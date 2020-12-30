@@ -19,98 +19,103 @@ QZMQ_BEGIN_NAMESPACE
 
 QZmqMessage::QZmqMessage(QObject *parent) : QObject(parent)
 {
-    this->zMsg = NULL;
+    this->msg = NULL;
 }
 
 QZmqMessage::~QZmqMessage()
 {
-    if(this->zMsg != NULL) {
-        int rc = zmq_msg_close(this->zMsg);
+    if(this->msg != NULL) {
+        int rc = zmq_msg_close(this->msg);
         Q_ASSERT(rc == 0);
-        delete this->zMsg;
-        this->zMsg = NULL;
+        delete this->msg;
+        this->msg = NULL;
     }
 }
 
 QZmqMessage* QZmqMessage::create(QObject *parent)
 {
-    zmq_msg_t *zMsg = new zmq_msg_t();
-    int rc = zmq_msg_init(zMsg);
+    zmq_msg_t *msg = new zmq_msg_t();
+    int rc = zmq_msg_init(msg);
     if (rc != 0) {
-        delete zMsg;
+        delete msg;
         return NULL;
     }
 
     QZmqMessage* qmsg = new QZmqMessage(parent);
-    qmsg->zMsg = zMsg;
+    qmsg->msg = msg;
     return qmsg;
 }
 
 QZmqMessage* QZmqMessage::create(size_t size, QObject *parent)
 {
-    zmq_msg_t *zMsg = new zmq_msg_t();
-    int rc = zmq_msg_init_size(zMsg, size);
+    zmq_msg_t *msg = new zmq_msg_t();
+    int rc = zmq_msg_init_size(msg, size);
     if (rc != 0) {
-        delete zMsg;
+        delete msg;
         return NULL;
     }
 
     QZmqMessage* qmsg = new QZmqMessage(parent);
-    qmsg->zMsg = zMsg;
+    qmsg->msg = msg;
     return qmsg;
 }
 
-QZmqMessage* QZmqMessage::create(zmq_msg_t *zMsg, QObject *parent)
+QZmqMessage* QZmqMessage::create(zmq_msg_t *msg, QObject *parent)
 {
     QZmqMessage* qmsg = new QZmqMessage(parent);
-    qmsg->zMsg = zMsg;
+    qmsg->msg = msg;
     return qmsg;
 }
 
 void* QZmqMessage::data()
 {
-    return zmq_msg_data(this->zMsg);
+    return zmq_msg_data(this->msg);
 }
 
 bool QZmqMessage::copy(QZmqMessage* dst)
 {
     Q_ASSERT(dst != NULL);
-    int rc = zmq_msg_copy(dst->zMsg, this->zMsg);
+    int rc = zmq_msg_copy(dst->msg, this->msg);
     return rc == 0;
 }
 
 bool QZmqMessage::move(QZmqMessage* dst)
 {
     Q_ASSERT(dst != NULL);
-    int rc = zmq_msg_move(dst->zMsg, this->zMsg);
+    int rc = zmq_msg_move(dst->msg, this->msg);
     return rc == 0;
 }
 
 bool QZmqMessage::more()
 {
-    return zmq_msg_more(this->zMsg) != 0;
+    return zmq_msg_more(this->msg) != 0;
 }
 
 size_t QZmqMessage::size()
 {
-    return zmq_msg_size(this->zMsg);
+    return zmq_msg_size(this->msg);
 }
 
 const char* QZmqMessage::gets(const char *property)
 {
-    return zmq_msg_gets(this->zMsg, property);
+    return zmq_msg_gets(this->msg, property);
 }
 
 bool QZmqMessage::get(int property, int &value)
 {
-    value = zmq_msg_get(this->zMsg, property);
+    value = zmq_msg_get(this->msg, property);
     return value != EINVAL;
 }
 
 bool QZmqMessage::set(int property, int value)
 {
-    int rc = zmq_msg_set(this->zMsg, property, value);
+    int rc = zmq_msg_set(this->msg, property, value);
     return rc != EINVAL;
+}
+
+zmq_msg_t* QZmqMessage::zmqMsg()
+{
+    return this->msg;
 }
 
 QZMQ_END_NAMESPACE
