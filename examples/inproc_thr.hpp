@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __INPROC_LAT_H__
-#define __INPROC_LAT_H__
+#ifndef __INPROC_THR_H__
+#define __INPROC_THR_H__
 
 #include <QCoreApplication>
 #include <QThread>
@@ -25,7 +25,7 @@ class WorkerThread : public QThread
 {
     Q_OBJECT
 public:
-    WorkerThread(uint32_t msg_size, QObject *parent=nullptr);
+    WorkerThread(uint32_t msgSize, uint32_t maxMsgs, QObject *parent=nullptr);
     virtual ~WorkerThread();
 
 private slots:
@@ -36,7 +36,10 @@ private slots:
 
 private:
     QZmqSocket* socket;
+    QZmqMessage* msgQueued;
+    uint32_t msgCount;
     uint32_t msgSize;
+    uint32_t maxMsgs;
 };
 
 class App : public QCoreApplication
@@ -54,12 +57,10 @@ private slots:
 
 private:
     QZmqSocket* socket;
-    QZmqMessage* msgQueued;
     WorkerThread* worker;
     int msgCount;
     int msgSize;
     int maxMsgs;
-    bool dontExit;
     void* watch;
 };
 
