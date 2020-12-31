@@ -20,7 +20,7 @@
 
 QZMQ_BEGIN_NAMESPACE
 
-class zmq_msg_t;
+struct zmq_msg_t;
 class QZMQ_API QZmqMessage : public QObject
 {
 public:
