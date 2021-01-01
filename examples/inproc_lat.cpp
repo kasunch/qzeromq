@@ -23,7 +23,6 @@
 
 App::App(int &argc, char **argv) : QCoreApplication(argc, argv)
 {
-
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addPositionalArgument("size", "message size");
@@ -41,6 +40,7 @@ App::App(int &argc, char **argv) : QCoreApplication(argc, argv)
     this->maxMsgs = args[1].toInt();
     this->socket = NULL;
     this->msgQueued = NULL;
+    this->watch = NULL;
 
     qInfo() << "Message size :" << this->msgSize;
     qInfo() << "Message count:" << this->maxMsgs;
@@ -170,6 +170,11 @@ WorkerThread::~WorkerThread()
 
 void WorkerThread::onMessage(QZmqSocket *socket, QZmqMessage *msg)
 {
+    if (msg->size() != this->msgSize) {
+        qCritical() << "Message of incorrect size received";
+        return;
+    }
+
     if (!this->socket->send(msg)) {
         int error = QZmqError::getLastError();
         const char *errStr = QZmqError::getLastError(error);
@@ -190,6 +195,7 @@ void WorkerThread::onError(QZmqSocket* socket, int error)
 void WorkerThread::started()
 {
     this->socket = QZmqSocket::create(ZMQ_REP);
+    Q_ASSERT(this->socket != NULL);
     connect(this->socket, &QZmqSocket::onMessage, this, &WorkerThread::onMessage);
     connect(this->socket, &QZmqSocket::onReadyToSend, this, &WorkerThread::onReadyToSend);
     connect(this->socket, &QZmqSocket::onError, this, &WorkerThread::onError);

@@ -1,8 +1,10 @@
 list(APPEND example_target_outputs "")
 list(APPEND example_target_outputs "inproc_lat")
 list(APPEND example_target_outputs "inproc_thr")
-#list(APPEND example_target_outputs "local_lat")
-#list(APPEND example_target_outputs "remote_lat")
+list(APPEND example_target_outputs "local_lat")
+list(APPEND example_target_outputs "remote_lat")
+list(APPEND example_target_outputs "local_thr")
+list(APPEND example_target_outputs "remote_thr")
 
 if(BUILD_STATIC)
     foreach(target ${example_target_outputs})
