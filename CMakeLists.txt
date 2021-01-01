@@ -25,7 +25,7 @@ option(USE_CONAN_BUILD_INFO "Whether or not to use conanbuildinfo.cmake file"  O
 option(BUILD_SHARED "Whether or not to build the shared object"  ON)
 option(BUILD_STATIC "Whether or not to build the static archive" ON)
 option(ZMQ_SHARED "Whether or not to use ZeroMQ shared library" OFF)
-option(BUILD_EXAMPLES "Whether or not to build examples" OFF)
+option(WITH_PERF_TOOL "Whether or not to perf tools" OFF)
 
 if (USE_CONAN_BUILD_INFO)
     include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
@@ -50,6 +50,6 @@ find_package(Threads REQUIRED)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(src)
-if (BUILD_EXAMPLES)
-    add_subdirectory(examples)
+if (WITH_PERF_TOOL)
+    add_subdirectory(perf)
 endif()

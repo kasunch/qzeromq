@@ -8,7 +8,7 @@ class QZeroMQConan(ConanFile):
     url = "https://github.com/kasunch/libqzmq"
     homepage = "https://github.com/kasunch/libqzmq"
     license = "Apache-2.0"  # SPDX Identifiers https://spdx.org/licenses/
-    exports_sources = ["src/*", "examples/*", "QZeroMQConfig.cmake.in", "CMakeLists.txt"]
+    exports_sources = ["src/*", "perf/*", "QZeroMQConfig.cmake.in", "CMakeLists.txt"]
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "cmake_find_package"
     options = {"shared": [True, False]}
@@ -47,7 +47,7 @@ class QZeroMQConan(ConanFile):
                 self._cmake.definitions["ZMQ_SHARED"] = "ON"
             else:
                 self._cmake.definitions["ZMQ_SHARED"] = "OFF"
-            self._cmake.definitions["BUILD_EXAMPLES"] = "ON"    
+            self._cmake.definitions["WITH_PERF_TOOL"] = "ON"    
             self._cmake.definitions["USE_CONAN_BUILD_INFO"] = "ON"
             self._cmake.definitions["SOURCE_VERSION"] = self.version
             self._cmake.definitions["SOURCE_COMMIT"] = self._git_commit
