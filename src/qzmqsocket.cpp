@@ -225,7 +225,6 @@ bool QZmqSocket::receive(QZmqMessage *msg, int flags)
 
 void QZmqSocket::receiveAll()
 {
-    this->readNotifier->setEnabled(false);
     int i = 0;
     while ((events() & ZMQ_POLLIN) && i < this->maxThroughput) {
         QZmqMessage *msg = QZmqMessage::create(this);
@@ -242,7 +241,6 @@ void QZmqSocket::receiveAll()
         }
         i++;
     }
-    this->readNotifier->setEnabled(true);
 }
 
 bool QZmqSocket::send(QZmqMessage *msg, int flags)
