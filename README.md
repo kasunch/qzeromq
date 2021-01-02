@@ -6,7 +6,7 @@ QZeroMQ provides an elegant socket API and seamlessly integrates with Qt's nativ
 # Why QZeroMQ?
 
 In short, QZeroMQ solves the problem of integrating ØMQ's sockets into Qt's native event loop.
-Solving this problem particularly challenging since ØMQ's sockets gives only edge triggered notifications instead of level triggered notifications. 
+Solving this problem particularly challenging since ØMQ's socket gives only edge triggered notifications instead of level triggered notifications. 
 
 The is nicely explained in the articles [ZeroMQ - Edge Triggered Notification](https://funcptr.net/2012/09/10/zeromq---edge-triggered-notification/) and [Embedding ZeroMQ In The Libev Event Loop](https://funcptr.net/2013/04/20/embedding-zeromq-in-the-libev-event-loop/). 
 QZeroMQ follows the suggestions from these articles such that ``aboutToBlock()`` and ``awake()`` signals of [QAbstractEventDispatcher](https://doc.qt.io/qt-5/qabstracteventdispatcher.html) are used to check readiness for reading/writing from/to the socket.
