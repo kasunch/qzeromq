@@ -44,12 +44,32 @@ For more details, refer to the examples in the [perf](perf) directory.
 
 # Limitations & developer notes
 
-Like ØMQ sockets, ``QZmqSocket``s are **NOT thread safe**.
-Moreover, ``QZmqSocket``s cannot be moved between threads since each ``QZmqSocket`` is associated with the event loop of the thread in which the socket is created.
-Another words, create ``QZmqSocket``s in the thread that use them, period. 
+Like ØMQ sockets, ``QZmqSockets`` are **NOT thread safe**.
+Moreover, ``QZmqSockets`` cannot be moved between threads since each ``QZmqSocket`` is associated with the event loop of the thread in which the socket is created.
+Another words, create/destroy ``QZmqSockets`` in the thread that use them. 
 
-# How to compile
-Coming soon..
+# How to build
+QZeroMQ's build system is based on [Cmake](https://cmake.org/).
+
+## On Linux
+You can build QZeroMQ as follows with make.
+
+```bash
+# Create a directory for build artifacts
+mkdir build
+cd build
+# Use Cmake to generate build tool (make) files
+cmake .. -DCMAKE_PREFIX_PATH="<QT installation directory>;<ZeroMQ installation directory>" -DWITH_PERF_TOOL=ON
+# Build using make
+make
+
+```
+
+## On macOS
+To be written
+
+## On Windows
+To be written
 
 # How to use in your project
 Coming soon..
