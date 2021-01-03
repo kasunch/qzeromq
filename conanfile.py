@@ -5,8 +5,8 @@ from conans import ConanFile, CMake, tools
 class QZeroMQConan(ConanFile):
     name = "qzeromq"
     description = "Qt library for ZMQ"
-    url = "https://github.com/kasunch/libqzmq"
-    homepage = "https://github.com/kasunch/libqzmq"
+    url = "https://github.com/kasunch/qzeromq"
+    homepage = "https://github.com/kasunch/qzeromq"
     license = "Apache-2.0"  # SPDX Identifiers https://spdx.org/licenses/
     exports_sources = ["src/*", "perf/*", "QZeroMQConfig.cmake.in", "CMakeLists.txt"]
     settings = "os", "compiler", "build_type", "arch"
