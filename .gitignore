@@ -3,6 +3,7 @@ build
 package
 .vscode
 .clangd
+.cache
 
 # Files
 compile_commands.json
