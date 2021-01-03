@@ -65,7 +65,6 @@ protected:
     QSocketNotifier *readNotifier;
     QSocketNotifier *writeNotifier;
     QTimer *wakeUpTimer;
-    bool eventPending;
     int maxThroughput;
 };
 
