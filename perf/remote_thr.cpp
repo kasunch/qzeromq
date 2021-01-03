@@ -80,13 +80,7 @@ void App::started()
 
     this->msgCount = 0;
     while(this->msgCount < this->maxMsgs) {
-        QZmqMessage *msg = NULL;
-        if (this->msgQueued != NULL) {
-            msg = this->msgQueued;
-            this->msgQueued = NULL;
-        } else {
-            msg = QZmqMessage::create(this->msgSize);
-        }
+        QZmqMessage *msg = QZmqMessage::create(this->msgSize);
         if (!this->socket->send(msg)) {
             int error = QZmqError::getLastError();
             if (error != EAGAIN) {
@@ -97,8 +91,10 @@ void App::started()
                 this->msgQueued = msg;
             }
             break;
+        } else {
+            delete msg;
+            this->msgCount++;
         }
-        this->msgCount++;
     }
 }
 
@@ -127,8 +123,10 @@ void App::onReadyToSend(QZmqSocket *socket)
                 this->msgQueued = msg;
             }
             break;
+        } else {
+            delete msg;
+            this->msgCount++;
         }
-        this->msgCount++;
     }
 
     if (this->msgCount == this->maxMsgs) {

@@ -90,6 +90,7 @@ void App::onMessage(QZmqSocket *socket, QZmqMessage *msg)
         App::exit(-1);
         return;
     }
+    delete msg;
     this->msgCount++;
 
     if (this->msgCount == this->maxMsgs) {

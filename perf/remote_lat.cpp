@@ -86,6 +86,7 @@ void App::started()
         App::exit(-1);
         return;
     }
+    delete msg;
 }
 
 void App::onMessage(QZmqSocket *socket, QZmqMessage *msg)
@@ -106,6 +107,8 @@ void App::onMessage(QZmqSocket *socket, QZmqMessage *msg)
             delete msg;
             App::exit(-1);
             return;
+        } else {
+            delete msg;
         }
     
     } else {

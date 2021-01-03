@@ -371,6 +371,7 @@ void QZmqSocket::receiveAll()
  *          If the massage cannot be sent at the moment, onReadyToSend() signal will be emitted 
  *          later when the socket is ready to send messages.
  *          @sa QZmqSocket::onReadyToSend()
+ *          @note This function does not deallocate the given message.
  * 
  * @param msg   A pointer to the massages to be sent.
  * @param flags Refer to the documentation of zmq_msg_send().
@@ -397,7 +398,6 @@ bool QZmqSocket::send(QZmqMessage *msg, int flags)
         this->writeNotifier->setEnabled(false);
     }
 
-    delete msg;
     return true;
 }
 

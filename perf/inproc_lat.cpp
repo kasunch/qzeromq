@@ -81,11 +81,13 @@ void App::onMessage(QZmqSocket *socket, QZmqMessage *msg)
             int error = QZmqError::getLastError();
             const char *errStr = QZmqError::getLastError(error);
             qCritical() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
+            delete msg;
             this->worker->quit();
             this->worker->wait();
             App::exit(-1);
             return;
         }
+        delete msg;
     } else {
         uint64_t elapsed = zmq_stopwatch_stop(this->watch);
         double latency = (double)elapsed / (this->msgCount * 2);
@@ -104,11 +106,14 @@ void App::onReadyToSend(QZmqSocket *socket)
             int error = QZmqError::getLastError();
             const char *errStr = QZmqError::getLastError(error);
             qCritical() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
+            delete this->msgQueued;
+            this->msgQueued = NULL;
             this->worker->quit();
             this->worker->wait();
             App::exit(-1);
             return;
         }
+        delete this->msgQueued;
         this->msgQueued = NULL;
     }
 }
@@ -150,7 +155,7 @@ void App::started()
         } else {
             this->msgQueued = msg;
         }
-    } 
+    }
 }
 
 WorkerThread::WorkerThread(uint32_t msgSize, QObject *parent) : QThread(parent)
@@ -171,6 +176,7 @@ WorkerThread::~WorkerThread()
 void WorkerThread::onMessage(QZmqSocket *socket, QZmqMessage *msg)
 {
     if (msg->size() != this->msgSize) {
+        delete msg;
         qCritical() << "Message of incorrect size received";
         return;
     }
@@ -179,7 +185,8 @@ void WorkerThread::onMessage(QZmqSocket *socket, QZmqMessage *msg)
         int error = QZmqError::getLastError();
         const char *errStr = QZmqError::getLastError(error);
         qCritical() << "Sending failed:" << QZmqError::getLastError() << "-" << errStr;
-    } 
+    }
+    delete msg; 
 }
 
 void WorkerThread::onReadyToSend(QZmqSocket *socket)
