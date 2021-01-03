@@ -21,6 +21,7 @@
 
 QZMQ_BEGIN_NAMESPACE
 
+class QTimer;
 class QSocketNotifier;
 class QZmqMessage;
 class QZMQ_API QZmqSocket : public QObject
@@ -63,6 +64,7 @@ protected:
     void *socket;
     QSocketNotifier *readNotifier;
     QSocketNotifier *writeNotifier;
+    QTimer *wakeUpTimer;
     bool eventPending;
     int maxThroughput;
 };

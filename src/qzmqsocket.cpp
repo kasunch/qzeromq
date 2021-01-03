@@ -30,12 +30,18 @@ QZmqSocket::QZmqSocket(QObject* parent) : QObject(parent)
     this->socket = NULL;
     this->readNotifier = NULL;
     this->writeNotifier = NULL;
+    this->wakeUpTimer = NULL;
     this->eventPending = false;
     this->maxThroughput = DEFAULT_MAX_THROUGHPUT;
 }
 
 QZmqSocket::~QZmqSocket()
 {
+    if (this->wakeUpTimer != NULL) {
+        delete this->wakeUpTimer;
+        this->wakeUpTimer = NULL;
+    }
+
     if (this->readNotifier != NULL) {
         this->readNotifier->setEnabled(false);
         delete this->readNotifier;
@@ -81,6 +87,10 @@ QZmqSocket* QZmqSocket::create(int type, QObject* parent)
     QObject::connect(qsocket->writeNotifier, &QSocketNotifier::activated, qsocket, &QZmqSocket::writeActivated);
     qsocket->writeNotifier->setEnabled(false);
 
+    qsocket->wakeUpTimer = new QTimer();
+    qsocket->wakeUpTimer->setSingleShot(true);
+    QObject::connect(qsocket->wakeUpTimer, &QTimer::timeout, qsocket, &QZmqSocket::onWakeUpTimer);
+
     auto dispatcher = QAbstractEventDispatcher::instance(nullptr); 
     Q_ASSERT(dispatcher != NULL);
     QObject::connect(dispatcher, &QAbstractEventDispatcher::aboutToBlock, qsocket, &QZmqSocket::onAboutToBlock);
@@ -115,7 +125,7 @@ void QZmqSocket::onAboutToBlock()
     if (this->eventPending) {
         // There is some activity on the socket.
         // Schedule the a single-shot timer that wakes up the event loop.
-        QTimer::singleShot(0, this, &QZmqSocket::onWakeUpTimer);
+        this->wakeUpTimer->start(0);
     } else {
         // No activity on the socket.
         // We have to rely on socket notifiers now.
