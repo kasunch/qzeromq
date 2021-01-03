@@ -47,12 +47,12 @@ For more details, refer to the examples in the [perf](perf) directory.
 *   Like ØMQ sockets, ``QZmqSockets`` are **NOT thread safe**. No locks are used.
     
     ``QZmqSockets`` cannot be moved between threads since each ``QZmqSocket`` is associated with the event loop of the thread in which the socket is created.
-    
     In other words, create/destroy ``QZmqSockets`` in the thread that use them. 
 
 *   [ØMQ's API](http://api.zeromq.org/) can be used together with QZeroMQ's API with care.
 
-    QZeroMQ does not necessarily provide one-to-one mapped functions for all of the [ØMQ's API](http://api.zeromq.org/) functions.
+    Use ``QZmqSocket::zmqSocket()`` to access the underlying raw ØMQ socket. 
+    Therefore, QZeroMQ does not necessarily provide one-to-one mapped functions for all of the [ØMQ's API](http://api.zeromq.org/) functions.
 
 # How to build
 QZeroMQ's build system is based on [Cmake](https://cmake.org/).
