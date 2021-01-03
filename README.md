@@ -8,8 +8,8 @@ QZeroMQ provides an elegant socket API and seamlessly integrates with Qt's nativ
 In short, QZeroMQ solves the problem of integrating ØMQ's sockets into Qt's native event loop.
 Solving this problem particularly challenging since ØMQ's socket gives only edge triggered notifications instead of level triggered notifications. 
 
-The is nicely explained in the articles [ZeroMQ - Edge Triggered Notification](https://funcptr.net/2012/09/10/zeromq---edge-triggered-notification/) and [Embedding ZeroMQ In The Libev Event Loop](https://funcptr.net/2013/04/20/embedding-zeromq-in-the-libev-event-loop/). 
-QZeroMQ follows the suggestions from these articles such that ``aboutToBlock()`` and ``awake()`` signals of [QAbstractEventDispatcher](https://doc.qt.io/qt-5/qabstracteventdispatcher.html) are used to check readiness for reading/writing from/to the socket.
+This is nicely explained in the articles [ZeroMQ - Edge Triggered Notification](https://funcptr.net/2012/09/10/zeromq---edge-triggered-notification/) and [Embedding ZeroMQ In The Libev Event Loop](https://funcptr.net/2013/04/20/embedding-zeromq-in-the-libev-event-loop/). 
+QZeroMQ integrates with Qt's event loop via ``aboutToBlock()`` and ``awake()`` signals of [QAbstractEventDispatcher](https://doc.qt.io/qt-5/qabstracteventdispatcher.html).
 
 # How to use the API?
 
@@ -42,11 +42,17 @@ The socket API of QZeroMQ can be used as follows.
 
 For more details, refer to the examples in the [perf](perf) directory.
 
-# Limitations & developer notes
+# Developer notes
 
-Like ØMQ sockets, ``QZmqSockets`` are **NOT thread safe**.
-Moreover, ``QZmqSockets`` cannot be moved between threads since each ``QZmqSocket`` is associated with the event loop of the thread in which the socket is created.
-Another words, create/destroy ``QZmqSockets`` in the thread that use them. 
+*   Like ØMQ sockets, ``QZmqSockets`` are **NOT thread safe**. No locks are used.
+    
+    ``QZmqSockets`` cannot be moved between threads since each ``QZmqSocket`` is associated with the event loop of the thread in which the socket is created.
+    
+    In other words, create/destroy ``QZmqSockets`` in the thread that use them. 
+
+*   [ØMQ's API](http://api.zeromq.org/) can be used together with QZeroMQ's API with care.
+
+    QZeroMQ does not necessarily provide one-to-one mapped functions for all of the [ØMQ's API](http://api.zeromq.org/) functions.
 
 # How to build
 QZeroMQ's build system is based on [Cmake](https://cmake.org/).
